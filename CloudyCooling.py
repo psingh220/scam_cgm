@@ -1,5 +1,5 @@
 """
-Module for providing gas cooling function using from Cloudy tables
+Module for providing gas cooling function using Cloudy tables
 """
 
 CoolingTableDir = 'CoolingTables/'
