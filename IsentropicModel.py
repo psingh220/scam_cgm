@@ -5,7 +5,7 @@ Module for accessing isentropic model
 import cgm_model_interface as CMI
 from astropy import units as un, constants as cons
 import numpy as np
-from scipy.integrate import odeint
+from scipy.integrate import odeint, quad
 
 X = 0.75     #hydrogen mass fraction
 mu = 4/(3+5*X) #mean molecular weight
@@ -62,29 +62,8 @@ class isentropic(CMI.Model):
 	def get_temperature_profile(self,r):
 		rhog = mu*mp*self.get_ngas(r)
 		return mu*mp*(self.K_thermal*rhog**(g1-1)+self.K_nonthermal*rhog**(g2-1)+self.vturb**2)
-	def dMgas(self,mg,r):
-		r=[r]*un.kpc
-		return self.get_ngas(r)*r*r*(un.kpc.to('cm'))**3
 	def get_gas_mass_profile(self,r):
-		y0 = 4*np.pi*mu*mp*odeint(self.dMgas,y0=0,t=[0.001,r[0].value]).T[0] #mass enclosed within r[0]
-		return (4*np.pi*mu*mp*odeint(self.dMgas,y0=y0[-1],t=r).T[0]).to('M_sun')
-	def dthermal_energy(self,Eth,r):
-		r=[r]*un.kpc
-		return self.get_gas_thermal_pressure_profile(r)*3/2*r*r*(un.kpc.to('cm'))**3
-	def get_thermal_energy_profile(self,r):
-		y0 = 4*np.pi*odeint(self.dthermal_energy,y0=0,t=[0.001,r[0].value]).T[0] # thermal energy at r[0]
-		return 4*np.pi*odeint(self.dthermal_energy,y0=y0[-1],t=r).T[0]*un.erg
-	def dnonthermal_energy(self,Enth,r):
-		r=[r]*un.kpc
-		return self.get_gas_non_thermal_pressure_profile(r)*3*r*r*(un.kpc.to('cm'))**3
-	def get_non_thermal_energy_profile(self,r):
-		y0 = 4*np.pi*odeint(self.dnonthermal_energy,y0=0,t=[0.001,r[0].value]).T[0] # non thermal energy at r[0]
-		return 4*np.pi*odeint(self.dnonthermal_energy,y0=y0[-1],t=r).T[0]*un.erg
-	def dturb_energy(self,Eturb,r):
-		r=[r]*un.kpc
-		return self.get_gas_turbulence_pressure_profile(r)*3/2*r*r*(un.kpc.to('cm'))**3
-	def get_turbulence_energy_profile(self,r):
-		y0 = 4*np.pi*odeint(self.dturb_energy,y0=0,t=[0.001,r[0].value]).T[0] # non thermal energy at r[0]
-		return 4*np.pi*odeint(self.dturb_energy,y0=y0[-1],t=r).T[0]*un.erg
-	def get_total_energy_profile(self,r):
-		return self.get_thermal_energy_profile(r)+self.get_non_thermal_energy_profile(r)+self.get_turbulence_energy_profile(r)
+		r0 = r.insert(0,0)
+		dr = r0[1:]-r0[:-1]
+		dMgas = self.get_ngas(r)*r**2*dr
+		return (dMgas.cumsum()*mu*mp*4.*np.pi).to('M_sun')
