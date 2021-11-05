@@ -102,7 +102,8 @@ class pNFW(CMI.Model):
 		"""
 		return self.tcool_tff
 	def get_gas_mass_profile(self,r):
-		r0 = r.insert(0,0)
-		dr = r0[1:]-r0[:-1]
-		dMgas = self.get_electron_density_profile(r)*r**2*dr
-		return (dMgas.cumsum()*mue*mp*4.*np.pi).to('M_sun')
+		nbins=max(int(r[0].value),2)
+		r = np.hstack((np.linspace(0,r[0],nbins),r))
+		dr = r[1:]-r[:-1]
+		dMgas = self.get_electron_density_profile(r[1:])*r[1:]**2*dr
+		return (dMgas.cumsum()[nbins-1:]*mue*mp*4.*np.pi).to('M_sun')
