@@ -101,15 +101,8 @@ class pNFW(CMI.Model):
 		returns the ratio of gas cooling time to free fall time which is also the input parameter of the model
 		"""
 		return self.tcool_tff
-	def dMgas(self,mg,r):
-		r=[r]*un.kpc
-		return self.get_electron_density_profile(r)*r*r*(un.kpc.to('cm'))**3
 	def get_gas_mass_profile(self,r):
-		y0 = 4*np.pi*mu*mp*odeint(self.dMgas,y0=0,t=[0.001,r[0].value]).T[0] #mass enclosed within r[0]
-		return (4*np.pi*mu*mp*odeint(self.dMgas,y0=y0[-1],t=r).T[0]).to('M_sun')
-	def dthermal_energy(self,Eth,r):
-		r=[r]*un.kpc
-		return self.get_gas_thermal_pressure_profile(r)*r*r*(un.kpc.to('cm'))**3
-	def get_thermal_energy_profile(self,r):
-		y0 = 4*np.pi*odeint(self.dthermal_energy,y0=0,t=[0.001,r[0].value]).T[0]*3/2 # thermal energy at r[0]
-		return 4*np.pi*odeint(self.dthermal_energy,y0=y0[-1],t=r).T[0]*3/2*un.erg
+		r0 = r.insert(0,0)
+		dr = r0[1:]-r0[:-1]
+		dMgas = self.get_electron_density_profile(r)*r**2*dr
+		return (dMgas.cumsum()*mue*mp*4.*np.pi).to('M_sun')
