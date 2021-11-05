@@ -63,7 +63,27 @@ class isentropic(CMI.Model):
 		rhog = mu*mp*self.get_ngas(r)
 		return mu*mp*(self.K_thermal*rhog**(g1-1)+self.K_nonthermal*rhog**(g2-1)+self.vturb**2)
 	def get_gas_mass_profile(self,r):
-		r0 = r.insert(0,0)
-		dr = r0[1:]-r0[:-1]
-		dMgas = self.get_ngas(r)*r**2*dr
-		return (dMgas.cumsum()*mu*mp*4.*np.pi).to('M_sun')
+		nbins=max(int(r[0].value),2)
+		r = np.hstack((np.linspace(0,r[0],nbins),r))
+		dr = r[1:]-r[:-1]
+		dMgas = self.get_ngas(r[1:])*r[1:]**2*dr
+		return (dMgas.cumsum()[nbins-1:]*mu*mp*4.*np.pi).to('M_sun')
+	def get_thermal_energy_profile(self,r):
+		nbins=max(int(r[0].value),2)
+		r = np.hstack((np.linspace(0,r[0],nbins),r))
+		dr = r[1:]-r[:-1]
+		dEth = self.get_gas_thermal_pressure_profile(r[1:])*r[1:]**2*dr
+		return (3./2.*dEth.cumsum()[nbins-1:]*4.*np.pi).to('erg')
+	def get_non_thermal_energy_profile(self,r):
+		nbins=max(int(r[0].value),2)
+		r = np.hstack((np.linspace(0,r[0],nbins),r))
+		dr = r[1:]-r[:-1]
+		dEnth = self.get_gas_non_thermal_pressure_profile(r[1:])*r[1:]**2*dr
+		return (3.*dEnth.cumsum()[nbins-1:]*4.*np.pi).to('erg')
+	def get_turbulence_energy_profile(self,r):
+		nbins=max(int(r[0].value),2)
+		r = np.hstack((np.linspace(0,r[0],nbins),r))
+		dr = r[1:]-r[:-1]
+		dEturb = self.get_gas_turbulence_pressure_profile(r[1:])*r[1:]**2*dr
+		return (3./2.*dEturb.cumsum()[nbins-1:]*4.*np.pi).to('erg')
+
