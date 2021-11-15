@@ -15,12 +15,20 @@ mu = 4/(3+5*X) #mean molecular weight
 mp = cons.m_p.to('g') #proton mass
 
 class PowerLaw(CMI.Potential):
-    def __init__(self,m,vc_Rvir,Rvir):
+    def __init__(self,m,vc_Rvir,Rvir,R_phi0_to_Rvir=10):
         self.m = m
         self.vc_Rvir = vc_Rvir
         self.Rvir = Rvir
+        self.R_phi0 = R_phi0_to_Rvir*Rvir
     def vc(self, r):
         return self.vc_Rvir * (r/self.Rvir)**self.m
+    def Phi(self, r):
+        if self.m!=0:
+            return -self.vc_Rvir**2 / (2*self.m) * ((self.R_phi0/self.Rvir)**(2*self.m) - (r/self.Rvir)**(2*self.m))
+        else:
+            return -self.vc_Rvir**2 * ln(self.R_phi0/r)
+    def dlnvc_dlnR(self, r):
+        return self.m
 
 class PowerLaw_with_AngularMomentum(PowerLaw):
     def __init__(self,m,vc_Rvir,Rvir,Rcirc):
@@ -29,6 +37,12 @@ class PowerLaw_with_AngularMomentum(PowerLaw):
     def vc(self, r):
         vc = PowerLaw.vc(self,r)
         return vc * (1-(self.Rcirc/r)**2)**0.5
+    def vc(self, r):
+        vc = PowerLaw.vc(self,r)
+        return vc * (1-(self.Rcirc/r)**2)**0.5
+    def dlnvc_dlnR(self,r):
+        dlnvc_dlnR = PowerLaw.dlnvc_dlnR(self,r)
+        return dlnvc_dlnR + ((r/self.Rcirc)**2-1)**-1.
 
 class NFW(CMI.Potential):	
     def __init__(self,Mvir,z,cvir=None,_fdr = 100.):
@@ -89,3 +103,7 @@ class NFW(CMI.Potential):
         return 2**0.5 * r / self.vc(r)
     def T200(self):
         return (0.5*mu*mp*self.vc(self.r200())**2).to('keV')
+    def dlnvc_dlnR(self, r):
+        return (ln(1+r/self.r_scale())*(self.r_scale()/r + 1.)**2 - (self.r_scale()/r + 1.))**-1.
+    def Phi(self,r):
+        return -(16*pi*cons.G*self.rho_scale*self.r_scale()**3 / r * ln(1+r/self.r_scale())).to('km**2/s**2')

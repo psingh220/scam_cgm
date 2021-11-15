@@ -11,9 +11,16 @@ class Potential:
 
 class Cooling:
 	"""interface for cooling function"""
-	def LAMBDA(self,T,Z):
+	def LAMBDA(self,T,Z,nH):
 		"""cooling function"""
 		assert(False)
+	def f_dlnLambda_dlnT(self,T,Z,nH):
+		"""logarithmic derivative of cooling function with respect to T"""
+		assert(False)
+	def f_dlnLambda_dlnrho(self,T,Z,nH):
+		"""logarithmic derivative of cooling function with respect to rho"""
+		assert(False)
+	
 
 class Metallicity_profile:
 	"""interface for metallicity profile"""
