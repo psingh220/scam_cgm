@@ -217,30 +217,30 @@ class CoolingFlow(CMI.Model):
     def get_gas_mass_profile(self,r):
         """gas mass profile"""
         if self.check_if_solved():
-            return np.interp(r,self.res.Rs(),self.res.Mgas()) * self.res.Mgas().unit
+            return np.interp(r,self.res.Rs(),self.res.Mgas())
     def get_entropy_profile(self,r):
         """pseudo entropy profile"""
         if self.check_if_solved():
-            return np.interp(r,self.res.Rs(),self.res.Ks()) * self.res.Ks().unit	    
+            return np.interp(r,self.res.Rs(),self.res.Ks()) 
     def get_temperature_profile(self,r):
         """gas temperature profile"""
         if self.check_if_solved():
-            return np.interp(r,self.res.Rs(),self.res.Ts()) * self.res.Ts().unit * cons.k_B
+            return np.interp(r,self.res.Rs(),self.res.Ts()) * cons.k_B
     def get_electron_density_profile(self,r):
         """electron density profile"""
         return self.get_nH(r)*ne2nH 
     def get_nH(self,r):
         """gas density profile"""
         if self.check_if_solved():
-            return np.interp(r,self.res.Rs(),self.res.nHs()) * self.res.nHs().unit
+            return np.interp(r,self.res.Rs(),self.res.nHs())
     def get_electron_thermal_pressure_profile(self,r):
         """electron thermal pressure profile"""
         if self.check_if_solved():
-            return np.interp(r,self.res.Rs(),self.res.P2ks()) * self.res.P2ks().unit * cons.k_B
+            return np.interp(r,self.res.Rs(),self.res.P2ks()) * cons.k_B
     def get_gas_thermal_pressure_profile(self,r):
         """gas thermal pressure profile"""
         if self.check_if_solved():
-            return np.interp(r,self.res.Rs(),self.res.P2ks()) * self.res.P2ks().unit * cons.k_B
+            return np.interp(r,self.res.Rs(),self.res.P2ks()) * cons.k_B
     def get_gas_non_thermal_pressure_profile(self,r):
         """non-thermal pressure profile"""
         return 0.
@@ -253,19 +253,19 @@ class CoolingFlow(CMI.Model):
     def get_radial_velocity(self,r):
         """radial velocity profile"""
         if self.check_if_solved():
-            return -np.interp(r,self.res.Rs(),self.res.vs()) * self.res.vs().unit
+            return -np.interp(r,self.res.Rs(),self.res.vs()) 
     def get_tcool(self,r):
         """gas cooling time-scale profile"""
         if self.check_if_solved():
-            return np.interp(r,self.res.Rs(),self.res.t_cools()) * self.res.t_cools().unit
+            return np.interp(r,self.res.Rs(),self.res.t_cools()) 
     def get_tff(self,r):
         """free-fall time-scale profile"""
         if self.check_if_solved():
-            return np.interp(r,self.res.Rs(),self.res.tff()) * self.res.tff().unit
+            return np.interp(r,self.res.Rs(),self.res.tff()) 
     def get_tcool2tff(self,r):
         """gas cooling to free-fall time-scale ratio profile"""
         if self.check_if_solved():
-            return np.interp(r,self.res.Rs(),self.res.tcool_to_tff()) * self.res.tcool_to_tff().unit
+            return np.interp(r,self.res.Rs(),self.res.tcool_to_tff())
 
 
 ######### steady-state equations integration
@@ -432,7 +432,7 @@ class IntegrationResult:
         """
         cooling radius for a given time (e.g. Hubble time)
         """
-        return 10.**np.interp(log(t.value),log(self.t_cools().value),log(self.Rs().value))*un.kpc
+        return 10.**np.interp(log(t.value),log(self.t_cools().value),log(self.Rs().value))
     def Rs(self):
         """radii of solution"""
         Rs = np.e**self.res.t
@@ -536,17 +536,17 @@ class IntegrationResult:
         Mgass = self.Mgas()
         rs = self.Rs()
         Rin, Rout = 0*un.kpc, self.Rcool(10*un.Gyr)*Rres2Rcool        
-        Rmax = np.interp(20*un.Gyr, (self.Rs() / self.cs()).to('Gyr').value,self.Rs().value)*un.kpc
+        Rmax = np.interp(20*un.Gyr, (self.Rs() / self.cs()).to('Gyr').value,self.Rs().value)
         print(" %dr(t_cool=10Gyr) = %.0f kpc, r(t_sc=20Gyr) = %.0f kpc"%(Rres2Rcool,Rout.value, Rmax.value))
         while Rin<Rmax:            
-            Min = np.interp(Rin,rs, Mgass)
-            Mout = np.interp(Rout,rs, Mgass)
+            Min = np.interp(Rin,rs, Mgass).value
+            Mout = np.interp(Rout,rs, Mgass).value
             dM = Mout- Min
             N = int(dM / resolution)
 
             N2 = 2*N
             q = np.random.random_sample(N2)
-            sampled_rs     = np.interp(Min+q*dM, Mgass, rs)
+            sampled_rs     = np.interp(Min+q*dM, Mgass, rs).value
             sampled_phis   = np.random.random_sample(N2) * 2 * np.pi
             sampled_thetas = np.arccos(np.random.random_sample(N2) * 2 - 1)
 
@@ -564,12 +564,12 @@ class IntegrationResult:
             sampled_xs = sampled_rs*np.sin(sampled_thetas)*np.cos(sampled_phis)
             sampled_ys = sampled_rs*np.sin(sampled_thetas)*np.sin(sampled_phis)
 
-            sampled_vrs    = np.interp(sampled_rs, rs, -self.vs())
-            sampled_epsilons     = np.interp(sampled_rs, rs, self.internalEnergy())
+            sampled_vrs    = np.interp(sampled_rs, rs, -self.vs()).value
+            sampled_epsilons     = np.interp(sampled_rs, rs, self.internalEnergy()).value
 
-            vcRcirc = np.interp(Rcirc, self.Rs(), self.vc2())**0.5
+            vcRcirc = np.interp(Rcirc, self.Rs(), self.vc2()).value**0.5
             sampled_vphis = ( (vcRcirc * (Rcirc / sampled_Rcylinders))                * (sampled_Rcylinders > Rcirc) + 
-                              np.interp(sampled_rs,self.Rs(),self.vc2())**0.5         * (sampled_Rcylinders < Rcirc) )
+                              np.interp(sampled_rs,self.Rs(),self.vc2()).value**0.5         * (sampled_Rcylinders < Rcirc) )
             #assumes v_theta=0
             sampled_vxs = sampled_vrs * np.sin(sampled_thetas)*np.cos(sampled_phis) - sampled_vphis * np.sin(sampled_phis)
             sampled_vys = sampled_vrs * np.sin(sampled_thetas)*np.sin(sampled_phis) + sampled_vphis * np.cos(sampled_phis)
