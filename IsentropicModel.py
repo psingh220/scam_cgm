@@ -63,27 +63,27 @@ class isentropic(CMI.Model):
 		rhog = mu*mp*self.get_ngas(r)
 		return mu*mp*(self.K_thermal*rhog**(g1-1)+self.K_nonthermal*rhog**(g2-1)+self.vturb**2)
 	def get_gas_mass_profile(self,r):
-		nbins=max(int(r[0].value),2)
-		r = np.hstack((np.linspace(0,r[0],nbins),r))
-		dr = r[1:]-r[:-1]
-		dMgas = self.get_ngas(r[1:])*r[1:]**2*dr
-		return (dMgas.cumsum()[nbins-1:]*mu*mp*4.*np.pi).to('M_sun')
+		rp = np.arange(1,r[-1].value,2)*un.kpc
+		drp = rp[1:]-rp[:-1]
+		dMgas = self.get_ngas(rp[1:])*rp[1:]**2*drp
+		mgass = (np.nancumsum(dMgas)*mu*mp*4.*np.pi).to('M_sun')
+		return np.interp(r,rp[1:],mgass)
 	def get_thermal_energy_profile(self,r):
-		nbins=max(int(r[0].value),2)
-		r = np.hstack((np.linspace(0,r[0],nbins),r))
-		dr = r[1:]-r[:-1]
-		dEth = self.get_gas_thermal_pressure_profile(r[1:])*r[1:]**2*dr
-		return (3./2.*dEth.cumsum()[nbins-1:]*4.*np.pi).to('erg')
+		rp = np.arange(1,r[-1].value,2)*un.kpc 
+		drp = rp[1:]-rp[:-1]
+		dEth = self.get_gas_thermal_pressure_profile(rp[1:])*rp[1:]**2*drp
+		ethermal = (3./2.*np.nancumsum(dEth)*4.*np.pi).to('erg')
+		return np.interp(r,rp[1:],ethermal)
 	def get_non_thermal_energy_profile(self,r):
-		nbins=max(int(r[0].value),2)
-		r = np.hstack((np.linspace(0,r[0],nbins),r))
-		dr = r[1:]-r[:-1]
-		dEnth = self.get_gas_non_thermal_pressure_profile(r[1:])*r[1:]**2*dr
-		return (3.*dEnth.cumsum()[nbins-1:]*4.*np.pi).to('erg')
+		rp = np.arange(1,r[-1].value,2)*un.kpc 
+		drp = rp[1:]-rp[:-1]
+		dEnth = self.get_gas_non_thermal_pressure_profile(rp[1:])*rp[1:]**2*drp
+		enonth  = (3.*np.nancumsum(dEnth)*4.*np.pi).to('erg')
+		return np.interp(r,rp[1:],enonth)
 	def get_turbulence_energy_profile(self,r):
-		nbins=max(int(r[0].value),2)
-		r = np.hstack((np.linspace(0,r[0],nbins),r))
-		dr = r[1:]-r[:-1]
-		dEturb = self.get_gas_turbulence_pressure_profile(r[1:])*r[1:]**2*dr
-		return (3./2.*dEturb.cumsum()[nbins-1:]*4.*np.pi).to('erg')
+		rp = np.arange(1,r[-1].value,2)*un.kpc 
+		drp = rp[1:]-rp[:-1]
+		dEturb = self.get_gas_turbulence_pressure_profile(rp[1:])*rp[1:]**2*drp
+		eturb = (3./2.*np.nancumsum(dEturb)*4.*np.pi).to('erg')
+		return np.interp(r,rp[1:],eturb)
 
