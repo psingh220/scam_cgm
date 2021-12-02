@@ -102,8 +102,14 @@ class pNFW(CMI.Model):
 		"""
 		return self.tcool_tff
 	def get_gas_mass_profile(self,r):
-		nbins=max(int(r[0].value),2)
-		r = np.hstack((np.linspace(0,r[0],nbins),r))
-		dr = r[1:]-r[:-1]
-		dMgas = self.get_electron_density_profile(r[1:])*r[1:]**2*dr
-		return (dMgas.cumsum()[nbins-1:]*mue*mp*4.*np.pi).to('M_sun')
+		rp = np.arange(1,r[-1].value,2)*un.kpc
+		drp = rp[1:]-rp[:-1]
+		dMgas = self.get_electron_density_profile(rp[1:])*rp[1:]**2*drp
+		mgass = (np.nancumsum(dMgas)*mue*mp*4.*np.pi).to('M_sun')
+		return np.interp(r,rp[1:],mgass)
+	def get_thermal_energy_profile(self,r):
+		rp = np.arange(1,r[-1].value,2)*un.kpc
+		drp = rp[1:]-rp[:-1]
+		dEth = self.get_gas_thermal_pressure_profile(rp[1:])*rp[1:]**2*drp
+		ethermal = (3./2.*np.nancumsum(dEth)*4.*np.pi).to('erg')
+		return np.interp(r,rp[1:],ethermal)
