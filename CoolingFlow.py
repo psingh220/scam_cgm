@@ -13,20 +13,6 @@ X = 0.75     #hydrogen mass fraction
 gamma = 5/3. #adiabatic index
 ne2nH = 1.2  #ratio of electrons to protons
 
-######### interface base classes for potential and circular velocity
-
-class Potential: 
-    """interface for gravitational potential"""
-    def vc(self,r): 
-        """circular velocity"""
-        assert(False)
-    def Phi(self,r):
-        """gravitational potential"""
-        assert(False)
-    def dlnvc_dlnR(self,r):
-        """logarithmic derivative of circular velocity"""
-        assert(False)
-
 class CoolingFlow(CMI.Model):
     def __init__(self,potential,cooling,metallicity,boundary,Mdot,R_circ=None,R_sonic=None,
                  R_max=1*un.Mpc,R_min=0.1*un.kpc,
