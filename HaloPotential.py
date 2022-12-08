@@ -88,10 +88,18 @@ class NFW(CMI.Potential):
         rs = arange(self.dr.value,2*self.rvir().value,self.dr.value)*un.kpc
         mean_rho2rhocrit = self.mean_enclosed_rho2rhocrit(rs)
         return rs[np.searchsorted(-mean_rho2rhocrit,-delta)]
+    def r500(self,delta=500.):
+        rs = arange(self.dr.value,2*self.rvir().value,self.dr.value)*un.kpc
+        mean_rho2rhocrit = self.mean_enclosed_rho2rhocrit(rs)
+        return rs[np.searchsorted(-mean_rho2rhocrit,-delta)]
     def r200m(self,delta=200.):
         rs = arange(self.dr.value,2*self.rvir().value,self.dr.value)*un.kpc
         mean_rho2rhocrit = self.mean_enclosed_rho2rhocrit(rs)
         return rs[np.searchsorted(-mean_rho2rhocrit,-delta*cosmo.Om(self.z))]		
+    def r500m(self,delta=500.):
+        rs = arange(self.dr.value,2*self.rvir().value,self.dr.value)*un.kpc
+        mean_rho2rhocrit = self.mean_enclosed_rho2rhocrit(rs)
+        return rs[np.searchsorted(-mean_rho2rhocrit,-delta*cosmo.Om(self.z))]
     def M200(self,delta=200.):
         return self.enclosedMass(self.r200(delta))
     def M200m(self,delta=200.):
