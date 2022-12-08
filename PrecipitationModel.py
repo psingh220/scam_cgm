@@ -64,10 +64,12 @@ class pNFW(CMI.Model):
 		r: input radii in kpc
 		returns pressure in ergs/cm^3
 		"""
-		r_inv = 1/r[::-1]
+		rp = np.arange(1.,self.rout.value[0],2.)*un.kpc
+		r_inv = 1/rp[::-1]
 		y0 = np.sqrt(self.tout.to('erg')**5/self.get_entropy_profile(self.rout)**3)
 		res = odeint(self.dHSE,y0=y0,t=r_inv)[::-1]
-		return res.T[0]*un.erg/un.cm**3
+		nee = res.T[0]*un.erg/un.cm**3
+		return np.interp(r,rp,nee)
 	def get_temperature_profile(self,r):
 		"""
 		precipitation-limited temperature profile
