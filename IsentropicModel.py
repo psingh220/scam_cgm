@@ -32,7 +32,7 @@ class isentropic(CMI.Model):
 		self.cooling = cooling
 		self.metallicity = metallicity
 		self.boundary = boundary
-		self.tout, self.ngout = boundary.outer_temperature(), (muh/mu)*boundary.outer_density()
+		self.rout, self.tout, self.ngout = boundary.outer_radius(), boundary.outer_temperature(), (muh/mu)*boundary.outer_density()
 		self.K_thermal = self.tout.to('erg')/self.ngout**(g1-1)/(mu*mp)**g1
 		self.K_nonthermal = (self.alpha_ntb-1)*self.tout.to('erg')/self.ngout**(g2-1)/(mu*mp)**g2
 	def dHSE(self,ng,r_inv):
@@ -41,9 +41,11 @@ class isentropic(CMI.Model):
 		tphi = (0.5*mu*mp*self.potential.vc(1/r_inv)**2).to('erg')
 		return 2*tphi/((mu*mp)**2*r_inv*(self.vturb**2/(mu*mp*ng)+self.K_thermal*g1*(mu*mp*ng)**(g1-2)+self.K_nonthermal*g2*(mu*mp*ng)**(g2-2)))
 	def get_ngas(self,r):
-		r_inv = 1/r[::-1]
+		rp = np.arange(1.,self.rout.value[0],2.)*un.kpc
+		r_inv = 1./rp[::-1]
 		res = odeint(self.dHSE,y0=self.ngout,t=r_inv)[::-1]
-		return res.T[0]/un.cm**3
+		ngass = res.T[0]/un.cm**3
+		return np.interp(r,rp,ngass)
 	def get_nH(self,r):
 		return (mu/muh)*self.get_ngas(r)
 	def get_electron_density_profile(self,r):
