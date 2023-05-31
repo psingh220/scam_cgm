@@ -112,6 +112,44 @@ class NFW(CMI.Potential):
     def T200(self):
         return (0.5*mu*mp*self.vc(self.r200())**2).to('keV')
     def dlnvc_dlnR(self, r):
-        return (ln(1+r/self.r_scale())*(self.r_scale()/r + 1.)**2 - (self.r_scale()/r + 1.))**-1.
+        #return (ln(1+r/self.r_scale())*(self.r_scale()/r + 1.)**2 - (self.r_scale()/r + 1.))**-1.
+        A = self.r_scale()+r
+        B = ln(A/self.r_scale())
+        return 0.5*(-r**2+A*(-r+A*B)) / (A*(r-A*B))
     def Phi(self,r):
         return -(16*pi*cons.G*self.rho_scale*self.r_scale()**3 / r * ln(1+r/self.r_scale())).to('km**2/s**2')
+
+class NFW_withGalaxy(NFW):
+    def __init__(self,Mvir,z,cvir=None,_fdr = 100.,Mgalaxy=6e10*un.Msun,scale_length=2.5*un.kpc):
+        super().__init__(Mvir,z,cvir,_fdr)
+        self.Mgalaxy=Mgalaxy
+        self.Rd = scale_length
+    def enclosedMass_galaxy(self,r):
+        """disk galaxy mass distribution"""
+        factor =  1-np.e**-(r/self.Rd)*(self.Rd+r)/self.Rd
+        return factor * self.Mgalaxy 
+    def enclosedMass(self, r):
+        return super().enclosedMass(r) + self.enclosedMass_galaxy(r)
+    def dlnvc_dlnR(self,r):
+        vc2_halo = (cons.G*super().enclosedMass(r)/r).to('km**2/s**2')
+        AA = vc2_halo/self.vc(r)**2
+        A = super().dlnvc_dlnR(r)
+        dvc2_glx_dr = ((cons.G*self.Mgalaxy / r).to('km**2/s**2')/r * 
+                       (np.e**(-r/self.Rd)*(r**2+self.Rd**2+r*self.Rd)/self.Rd**2 - 1))
+        vc2_galaxy = (cons.G*self.enclosedMass_galaxy(r)/r).to('km**2/s**2')
+        B = 0.5 * r*dvc2_glx_dr/vc2_galaxy
+        BB = vc2_galaxy/self.vc(r)**2
+        print(vc2_halo[20]**0.5,AA[20],A[20],vc2_galaxy[20]**0.5,BB[20],B[20])
+        return A*AA+B*BB
+    def Phi(self,r):        
+        return super().Phi(r) + cons.G*self.Mgalaxy*(np.e**-(r/self.Rd)-1)/r
+    def mean_enclosed_rho2rhocrit(self,r): 
+        """does not include galaxy"""
+        Ms = super().enclosedMass(r)
+        return Ms / (4/3.*pi*r**3) / cosmo.critical_density(self.z)
+    def M200(self,delta=200.):
+        """does not include galaxy"""
+        return super().enclosedMass(self.r200(delta))
+    def M200m(self,delta=200.):
+        """does not include galaxy"""
+        return super().enclosedMass(self.r200m(delta))
